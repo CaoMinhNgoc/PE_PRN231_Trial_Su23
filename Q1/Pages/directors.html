@@ -1,0 +1,121 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="../lib/bootstrap/dist/css/bootstrap.min.css">
+
+</head>
+
+<body>
+    <div class="container">
+        <h1>Search Directors</h1>
+        <div class="d-flex w-75">
+            <input type="text" placeholder="Nationality" id="nationality" class="form-control me-1" />
+            <input type="text" placeholder="Gender" id="gender" class="form-control me-1" />
+            <button class="btn btn-outline-secondary" id="search">Search</button>
+        </div>
+
+        <div class="row mt-3">
+            <div class="col-md-7" id="table-directors"></div>
+            <div class="col-md-5" id="table-detail"></div>
+        </div>
+    </div>
+    <script src="../lib/jquery/dist/jquery.min.js"></script>
+    <script>
+        $(document).ready(() => {
+            $('#search').click(() => {
+                let nationality = $('#nationality').val(), gender = $('#gender').val();
+
+                $.ajax({
+                    url: `http://localhost:5000/api/Director/GetDirectors/${nationality}/${gender}`,
+                    method: 'GET',
+                    contentType: 'application/json',
+                    success: (data) => {
+                        $('table-directors').html('');
+                        if (data) {
+                            $('#table-directors').html(generateTable(data));
+                        }
+                    },
+                    error: (data) => {
+
+                    }
+                })
+            })
+
+            const generateTable = (data) => {
+                let tableContent = `
+                        <table class="table table-sm table-bordered table-striped m-2">
+                            <thead>
+                                <tr>
+                                    <th>DirectorId</th>
+                                    <th>Fullname</th>
+                                    <th>Gender</th>
+                                    <th>Dob</th>
+                                    <th>Description</th>
+                                    <th>Nationality</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {0}
+                            </tbody>
+                        </table>`;
+
+                let tableData = '';
+                data.forEach(element => {
+                    tableData += `
+                            <tr>
+                                <td>${element.id}</td>
+                                <td>${element.fullName}</td>
+                                <td>${element.gender}</td>
+                                <td>${element.dobString}</td>
+                                <td>${element.description}</td>
+                                <td>${element.nationality}</td>
+                                <td>
+                                    <a href="javascript:void(0)" data-id="${element.id}" class="viewDetail">Detail</a>
+                                </td>
+                            </tr>
+                        `;
+                });
+
+                return tableContent.replace("{0}", tableData);
+            }
+
+            $(document).on('click', '.viewDetail', function (){
+                let id = $(this).attr('data-id');
+
+                $.ajax({
+                    url: `http://localhost:5000/api/Director/GetDirector/${id}`,
+                    method: 'GET',
+                    contentType: 'application/json',
+                    success: (data) => {
+                        $('#table-detail').html('');
+                        if (data) {
+                            $('#table-detail').html(generateTableDetail(data));
+                        }
+                    },
+                    error: (data) => {
+
+                    }
+                })
+            })
+
+            const generateTableDetail = (data) => {
+                return `
+                    <h3>List of movies of '${data.fullName}'</h3>
+                    <ul>
+                        ${data.movies.map(x => `<li>${x.title} - Release Year: ${x.releaseYear}</li>`).join('')}
+                    </ul>
+                    `
+                    ;
+            }
+        })
+    </script>
+
+
+</body>
+
+</html>
